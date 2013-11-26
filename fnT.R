@@ -1,6 +1,7 @@
 
 # df=read.arff(system.file("arff","glass.arff",package="RWeka"))
-asdfsdafsd
+#asdfsdafsd
+#Tess
 TestRWekaCls=function(trdat,tsdat,func){
   library(RWeka)
   cName=colnames(trdat)
