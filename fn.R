@@ -229,6 +229,12 @@ CroAccy=function(dat,numDit,meth){
   return(eff)
 }
 
+# ResampDat:数据平衡，将2类样本按比例重采样（下采样方法） 
+# 输入
+#   dat:数据，n*m类型，第n列为类别，factor
+#   ratio:欲得到的大类数据/小类数据的比例
+# 输出
+#   result:得到的数据
 ResampDat=function(dat,ratio){
   rowcol=dim(dat)
   lable=dat[,rowcol[2]]
@@ -260,3 +266,39 @@ ResampDat=function(dat,ratio){
   }
   return(result)
 }  
+
+# OneFeatCls:按数据到各单一特征，评判特征的分类能力和召回率 
+# 输入
+#   data:数据，n*m类型，第n列为类别，factor
+# 输出
+#   result:得到的结果，为准确率+召回率
+OneFeatCls=function(data){
+	col=dim(data)
+	result=logical()
+	numc=col[2]-1
+	for(i in 1:numc){
+		datause=data[,c(i,col[2])]
+		tmp=TestRWekaCls(datause,datause,"SMO")
+		result=cbind(result,tmp)
+	}
+	return(result)
+}
+
+# ResampOneFeatCls:重采样后，按数据到各单一特征，评判特征的分类能力和召回率 
+# 输入
+#   data:数据，n*m类型，第n列为类别，factor
+#   ratio:欲得到的大类数据/小类数据的比例
+# 输出
+#   result:得到的结果，为准确率+召回率
+ResampOneFeatCls=function(data,ratio){
+	col=dim(data)
+	result=logical()
+	numc=col[2]-1
+	for(i in 1:numc){
+		datause=data[,c(i,col[2])]
+		datause=ResampDat(datause,ratio)
+		tmp=TestRWekaCls(datause,datause,"SMO")
+		result=cbind(result,tmp)
+	}
+	return(result)
+}
