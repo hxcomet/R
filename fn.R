@@ -4,7 +4,8 @@
 #   dat:训练数据集，n*m形式的数据框，其中第m列为分类类别，是factor
 #   test：测试数据集，n*m形式的数据框，其中第m列为分类类别，是factor
 # 输出
-#   accy:分类准确率
+#  result[1]: accy:--类准确率
+#  result[2]: recall:--召回率
 TestSVM = function(dat,testDat){
   library("class")
   library("e1071")
@@ -52,7 +53,8 @@ GetRecall=function(tlable,rlable,selt){
 #   tsdat：测试数据集，n*m形式的数据框，其中第m列为分类类别，是factor
 #   func:调用的函数名，为String形式 
 # 输出
-#   accy:分类准确率
+#  result[1]: accy:--类准确率
+#  result[2]: recall:--召回率
 TestRWekaCls=function(trdat,tsdat,func){
   library(RWeka)
   cName=colnames(trdat)
@@ -284,6 +286,7 @@ OneFeatCls=function(data){
 	return(result)
 }
 
+
 # ResampOneFeatCls:重采样后，按数据到各单一特征，评判特征的分类能力和召回率 
 # 输入
 #   data:数据，n*m类型，第n列为类别，factor
@@ -300,5 +303,39 @@ ResampOneFeatCls=function(data,ratio){
 		tmp=TestRWekaCls(datause,datause,"SMO")
 		result=cbind(result,tmp)
 	}
+	return(result)
+}
+
+# FetSelect:按数据到各单一特征，评判特征的分类能力和召回率 
+# 输入
+#   data:数据，n*m类型，第n列为类别，factor
+# 输出
+#   result:得到的结果，为准确率+召回率
+FetSelect=function(data){
+	col=dim(data)
+	result=logical()
+	numc=col[2]-1
+	selc=c()
+	acMat=c()
+	recMat=c()
+	mrecall=0
+	allFet=1:numc
+	for(i in 1:numc){
+#		datause=data[,c(i,col[2])]
+		for(j in 1:(numc+1-i)){
+			datause=data[,c(selc,col[2])]
+			tmp1=TestRWekaCls(datause,datause,"SMO")
+			if(tmp[2]>mrecall){
+				thisSel=yu[j]
+				sigac=tmp[1]
+				mrecall=tmp[2]
+			}
+		}
+		selc=c(selc,thiSel)
+		acMat=c(acMat,sigac)
+		recMat=c(recMat,mrecall)
+		yu=allFet[-selc]
+	}
+	result=cbind(selc,acMat,recMat)
 	return(result)
 }
