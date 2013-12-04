@@ -310,7 +310,7 @@ ResampOneFeatCls=function(data,ratio){
 # 输入
 #   data:数据，n*m类型，第n列为类别，factor
 # 输出
-#   result:得到的结果，为准确率+召回率
+#   result:得到的结果，为特征+准确率+召回率
 FetSelect=function(data){
 	col=dim(data)
 	result=logical()
@@ -320,18 +320,19 @@ FetSelect=function(data){
 	recMat=c()
 	mrecall=0
 	allFet=1:numc
+	yu=1:numc
 	for(i in 1:numc){
-#		datause=data[,c(i,col[2])]
-		for(j in 1:(numc+1-i)){
-			datause=data[,c(selc,col[2])]
-			tmp1=TestRWekaCls(datause,datause,"SMO")
+		mrecall=0
+		for(j in 1:(numc-i)){
+			datause=data[,c(selc,yu[j],col[2])]
+			tmp=TestRWekaCls(datause,datause,"SMO")
 			if(tmp[2]>mrecall){
 				thisSel=yu[j]
 				sigac=tmp[1]
 				mrecall=tmp[2]
 			}
 		}
-		selc=c(selc,thiSel)
+		selc=c(selc,thisSel)
 		acMat=c(acMat,sigac)
 		recMat=c(recMat,mrecall)
 		yu=allFet[-selc]
