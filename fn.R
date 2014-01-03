@@ -7,25 +7,25 @@
 #  result[1]: accy:--类准确率
 #  result[2]: recall:--召回率
 TestSVM = function(dat,testDat){
-  library("class")
-  library("e1071")
-  col=ncol(dat)
-  trainSamp=dat[,1:col-1]
-  trainLable=as.factor(dat[,col])
-  model=svm(trainSamp,trainLable)
-  testSamp=testDat[,1:col-1]
-  testLable=as.factor(testDat[,col])
-  prd=predict(model,testSamp)
-  rightLable=which(prd==testLable)
-  accy=length(rightLable)/length(testLable)
+	library("class")
+	library("e1071")
+	col=ncol(dat)
+	trainSamp=dat[,1:col-1]
+	trainLable=as.factor(dat[,col])
+	model=svm(trainSamp,trainLable)
+	testSamp=testDat[,1:col-1]
+	testLable=as.factor(testDat[,col])
+	prd=predict(model,testSamp)
+	rightLable=which(prd==testLable)
+	accy=length(rightLable)/length(testLable)
 # 以标号为“1”的作为正例，计算召回率
-  recall=GetRecall(prd,testLable,"1")
+	recall=GetRecall(prd,testLable,"1")
 # 
-  result=c(accy,recall)
-  detach("package:e1071")
-  detach("package:class")
-  return(result)
-  #   table(prd,testLable)  
+	result=c(accy,recall)
+	detach("package:e1071")
+	detach("package:class")
+	return(result)
+	#   table(prd,testLable)  
 }
 
 
@@ -35,15 +35,15 @@ TestSVM = function(dat,testDat){
 #       selt：欲计算的类别名，为rlable中某个值
 # 输出：recall:返回召回率，无此类别时为-99
 GetRecall=function(tlable,rlable,selt){
-  useId=which(rlable==selt)
-  if(length(useId)==1){
-    print(paste("No class:",selt))
-    recall=-99
-  }else{
-    rightId=which(tlable[useId]==selt)
-    recall=length(rightId)/length(useId)
-  }
-  return(recall)    
+	useId=which(rlable==selt)
+	if(length(useId)==1){
+		print(paste("No class:",selt))
+		recall=-99
+	}else{
+		rightId=which(tlable[useId]==selt)
+		recall=length(rightId)/length(useId)
+	}
+	return(recall)    
 }
 
 # TestRWekaCls：用RWeka的分类算法计算分类准确率
@@ -56,23 +56,23 @@ GetRecall=function(tlable,rlable,selt){
 #  result[1]: accy:--类准确率
 #  result[2]: recall:--召回率
 TestRWekaCls=function(trdat,tsdat,func){
-  library(RWeka)
-  cName=colnames(trdat)
-  trdat[,length(cName)]=as.factor(trdat[,length(cName)])
-  clsName=cName[length(cName)]
-  formu=paste(clsName,"~.")
-  cmdStr=paste("model=",func,"(formu,data=trdat)",sep="")
-  eval(parse(text=cmdStr))
-  prd=predict(model,tsdat,type="class")
-  testLable=as.factor(tsdat[,length(cName)])
-  rightLable=which(prd==testLable)
-  accy=length(rightLable)/length(testLable)
-  # 以标号为“1”的作为正例，计算召回率
-  recall=GetRecall(prd,testLable,"1")
-  # 
-  result=c(accy,recall)
-  detach("package:RWeka")
-  return(result)
+	library(RWeka)
+	cName=colnames(trdat)
+	trdat[,length(cName)]=as.factor(trdat[,length(cName)])
+	clsName=cName[length(cName)]
+	formu=paste(clsName,"~.")
+	cmdStr=paste("model=",func,"(formu,data=trdat)",sep="")
+	eval(parse(text=cmdStr))
+	prd=predict(model,tsdat,type="class")
+	testLable=as.factor(tsdat[,length(cName)])
+	rightLable=which(prd==testLable)
+	accy=length(rightLable)/length(testLable)
+	# 以标号为“1”的作为正例，计算召回率
+	recall=GetRecall(prd,testLable,"1")
+	# 
+	result=c(accy,recall)
+	detach("package:RWeka")
+	return(result)
 }
 
 # DelNaSym：清除数据中的 sym 样本，转换为NA形式，再直接删除的方法
@@ -82,10 +82,10 @@ TestRWekaCls=function(trdat,tsdat,func){
 # 输出
 #   newDat：n*m形式的数据框
 DelNaSym=function(sdat,sym){
-  index=which(sdat==sym,arr.ind=T)
-  sdat[index]=NA
-  newDat=na.omit(sdat)
-  return(newDat)
+	index=which(sdat==sym,arr.ind=T)
+	sdat[index]=NA
+	newDat=na.omit(sdat)
+	return(newDat)
 }
 
 # MeanNa：将数据中的样本的属性NA值， 用同列均值的方法替换
@@ -94,15 +94,15 @@ DelNaSym=function(sdat,sym){
 # 输出
 #   sdat：n*m形式的数据框
 MeanNa=function(sdat){
-  sdat=apply(sdat,2,Ttp)
-  return(sdat)
-  #   内嵌函数Ttp,在向量中，用此向量的均值替代NA值
-  Ttp=function(sdat){
-    naMat=is.na(sdat)
-    meanUse=mean(sdat,na.rm=T)
-    sdat[naMat]=meanUse
-    return(sdat)
-  }
+	sdat=apply(sdat,2,Ttp)
+	return(sdat)
+	#   内嵌函数Ttp,在向量中，用此向量的均值替代NA值
+	Ttp=function(sdat){
+		naMat=is.na(sdat)
+		meanUse=mean(sdat,na.rm=T)
+		sdat[naMat]=meanUse
+		return(sdat)
+	}
 }
 
 # NormDat：将数据中的样本各属性进行归一化
@@ -111,12 +111,12 @@ MeanNa=function(sdat){
 # 输出
 #   sdat：n*m形式的数据框
 NormDat=function(sdat){
-  mindt=apply(sdat,2,min)
-  maxdt=apply(sdat,2,max)
-  t1=t(sdat)-mindt
-  t2=t1/(maxdt-mindt)
-  newDat=t(t2)
-  return(newDat)
+	mindt=apply(sdat,2,min)
+	maxdt=apply(sdat,2,max)
+	t1=t(sdat)-mindt
+	t2=t1/(maxdt-mindt)
+	newDat=t(t2)
+	return(newDat)
 }
 
 # File2Mem：将数据文件读入内存，并将类别属性列排到最后一列
@@ -126,22 +126,22 @@ NormDat=function(sdat){
 # 输出
 #   sdatcD：转换后的数据
 File2Mem=function(filename,colCs){
-  sdatc=read.table(filename,sep=",")
-  if(colCs==1){
-    s1=t(logical())
-  }else{
-    s1=sdatc[,1:colCs-1]
-  }
-  if(colCs==ncol(sdatc)){
-    s2=t(logical())
-  }else{
-    s2=sdatc[,(colCs+1):ncol(sdatc)]
-  }
-  #   tmp=rbind(t(s1),t(s2))
-  sdatcSamp=cbind(s1,s2)
-  sdatcCls=as.character(sdatc[,colCs])    
-  sdatcD=cbind(sdatcSamp,sdatcCls)
-  return(sdatcD)
+	sdatc=read.table(filename,sep=",")
+	if(colCs==1){
+		s1=t(logical())
+	}else{
+		s1=sdatc[,1:colCs-1]
+	}
+	if(colCs==ncol(sdatc)){
+		s2=t(logical())
+	}else{
+		s2=sdatc[,(colCs+1):ncol(sdatc)]
+	}
+	#   tmp=rbind(t(s1),t(s2))
+	sdatcSamp=cbind(s1,s2)
+	sdatcCls=as.character(sdatc[,colCs])    
+	sdatcD=cbind(sdatcSamp,sdatcCls)
+	return(sdatcD)
 }
 
 # CroDat:等分dat矩阵为numDit份，各份保持和原矩阵一样的类别比例
@@ -151,28 +151,28 @@ File2Mem=function(filename,colCs){
 # 输出
 #   result：list形式，其中result[[1]]~~result[[num]]为data.frame形式的各小份
 CroDat=function(dat,numDit) {
-  rowcol=dim(dat)
-  lable=dat[,rowcol[2]]
-  lableAll=levels(lable)
-  result=list()
-  blank=logical()
-  for(i in 1:numDit){
-    result[[i]]=list(blank)
-  }
-  for(i in 1:length(lableAll)){
-    idSig=lable==lableAll[i]
-    datSig=dat[idSig,]
-    tmpCt=nrow(datSig)
-    tmp=runif(tmpCt)
-    idRunP=logical()
-    for(j in 1:numDit){
-      idRunP=(((j-1)/numDit<tmp)&(tmp<=j/numDit))
-      datRunP=datSig[idRunP,]
-      pieD=rbind(result[[j]],datRunP)
-      result[[j]]=pieD
-    }
-  }
-  return(result)
+	rowcol=dim(dat)
+	lable=dat[,rowcol[2]]
+	lableAll=levels(lable)
+	result=list()
+	blank=logical()
+	for(i in 1:numDit){
+		result[[i]]=list(blank)
+	}
+	for(i in 1:length(lableAll)){
+		idSig=lable==lableAll[i]
+		datSig=dat[idSig,]
+		tmpCt=nrow(datSig)
+		tmp=runif(tmpCt)
+		idRunP=logical()
+		for(j in 1:numDit){
+			idRunP=(((j-1)/numDit<tmp)&(tmp<=j/numDit))
+			datRunP=datSig[idRunP,]
+			pieD=rbind(result[[j]],datRunP)
+			result[[j]]=pieD
+		}
+	}
+	return(result)
 }
 
 # CroAccy:交叉验证 
@@ -187,48 +187,48 @@ CroDat=function(dat,numDit) {
 #   eff:eff[1] 分类准确度均值
 #       eff[2] 分类准确度标准差
 CroAccy=function(dat,numDit,meth){
-  nmCol=dim(dat)
-  dat[,nmCol[2]]=as.factor(dat[,nmCol[2]])
-  datMat=CroDat(dat,numDit)
-  accyMat=matrix()
-  datAll=logical()
-  ct=c(0)
-  for(i in 1:numDit){
-    datAll=rbind(datAll,datMat[[i]])
-    tmp=dim(datMat[[i]])      
-    ct[i+1]=ct[i]+tmp[1]
-  }
-  acyM=c(0)
-  for(i in 1:numDit){
-    tsDat=datAll[(ct[i]+1):ct[i+1],]
-    if(i==1){
-      st1=logical()
-    }else{
-      st1=datAll[1:ct[i],]
-    }
-    if(i==numDit){
-      st2=logical()
-    }else{
-      st2=datAll[(ct[i+1]+1):nrow(dat),]      
-    }    
-    trDat=rbind(st1,st2)
-    if(meth==1){
-      sresult=TestSVM(trDat,tsDat)
-      acyM[i]=sresult[1]      
-    }
-    if(meth==2){
-      sresult=TestRWekaCls(trDat,tsDat,"J48")        
-      acyM[i]=sresult[1]
-    }
-    if(meth==3){
-      sresult=TestRWekaCls(trDat,tsDat,"IBk")        
-      acyM[i]=sresult[1]
-    }
-  }
-  accy=mean(acyM)
-  std=sd(acyM)
-  eff=c(accy,std)
-  return(eff)
+	nmCol=dim(dat)
+	dat[,nmCol[2]]=as.factor(dat[,nmCol[2]])
+	datMat=CroDat(dat,numDit)
+	accyMat=matrix()
+	datAll=logical()
+	ct=c(0)
+	for(i in 1:numDit){
+		datAll=rbind(datAll,datMat[[i]])
+		tmp=dim(datMat[[i]])      
+		ct[i+1]=ct[i]+tmp[1]
+	}
+	acyM=c(0)
+	for(i in 1:numDit){
+		tsDat=datAll[(ct[i]+1):ct[i+1],]
+		if(i==1){
+			st1=logical()
+		}else{
+			st1=datAll[1:ct[i],]
+		}
+		if(i==numDit){
+			st2=logical()
+		}else{
+			st2=datAll[(ct[i+1]+1):nrow(dat),]      
+		}    
+		trDat=rbind(st1,st2)
+		if(meth==1){
+			sresult=TestSVM(trDat,tsDat)
+			acyM[i]=sresult[1]      
+		}
+		if(meth==2){
+			sresult=TestRWekaCls(trDat,tsDat,"J48")        
+			acyM[i]=sresult[1]
+		}
+		if(meth==3){
+			sresult=TestRWekaCls(trDat,tsDat,"IBk")        
+			acyM[i]=sresult[1]
+		}
+	}
+	accy=mean(acyM)
+	std=sd(acyM)
+	eff=c(accy,std)
+	return(eff)
 }
 
 # ResampDat:数据平衡，将2类样本按比例重采样（下采样方法） 
@@ -238,35 +238,35 @@ CroAccy=function(dat,numDit,meth){
 # 输出
 #   result:得到的数据
 ResampDat=function(dat,ratio){
-  rowcol=dim(dat)
-  lable=dat[,rowcol[2]]
-  lable=as.factor(lable)
-  lableAll=levels(lable)
-  result=list()
-  blank=logical()
-  idSig1=(lable==lableAll[1])
-  datSig1=dat[idSig1,]
-  idSig2=(lable==lableAll[2])
-  datSig2=dat[idSig2,]
+	rowcol=dim(dat)
+	lable=dat[,rowcol[2]]
+	lable=as.factor(lable)
+	lableAll=levels(lable)
+	result=list()
+	blank=logical()
+	idSig1=(lable==lableAll[1])
+	datSig1=dat[idSig1,]
+	idSig2=(lable==lableAll[2])
+	datSig2=dat[idSig2,]
 # 类datSig1为小类
-  if(nrow(datSig1)>nrow(datSig2)){
-    tmp=datSig1
-    datSig1=datSig2
-    datSig2=tmp
-  }
-  n1=nrow(datSig1)
-  n2=nrow(datSig2)    
-  rnum=runif(n2)
-  n2use=n1*ratio
-  if(n2use>n2){
-    print("Large class is less the ratio, calculate with region data")
-    result=dat
-  }else{
-    idRunP=(rnum<(n2use/n2))
-    datRunP=datSig2[idRunP,]
-    result=rbind(datSig1,datRunP)
-  }
-  return(result)
+	if(nrow(datSig1)>nrow(datSig2)){
+		tmp=datSig1
+		datSig1=datSig2
+		datSig2=tmp
+	}
+	n1=nrow(datSig1)
+	n2=nrow(datSig2)    
+	rnum=runif(n2)
+	n2use=n1*ratio
+	if(n2use>n2){
+		print("Large class is less the ratio, calculate with region data")
+		result=dat
+	}else{
+		idRunP=(rnum<(n2use/n2))
+		datRunP=datSig2[idRunP,]
+		result=rbind(datSig1,datRunP)
+	}
+	return(result)
 }  
 
 # OneFeatCls:按数据到各单一特征，评判特征的分类能力和召回率 
@@ -280,7 +280,7 @@ OneFeatCls=function(data){
 	numc=col[2]-1
 	for(i in 1:numc){
 		datause=data[,c(i,col[2])]
-		tmp=TestRWekaCls(datause,datause,"SMO")
+		tmp=TestRWekaCls(datause,datause,"J48")
 		result=cbind(result,tmp)
 	}
 	return(result)
@@ -300,18 +300,19 @@ ResampOneFeatCls=function(data,ratio){
 	for(i in 1:numc){
 		datause=data[,c(i,col[2])]
 		datause=ResampDat(datause,ratio)
-		tmp=TestRWekaCls(datause,datause,"SMO")
+		tmp=TestRWekaCls(datause,datause,"J48")
 		result=cbind(result,tmp)
 	}
 	return(result)
 }
 
-# FetSelect:按数据到各单一特征，评判特征的分类能力和召回率 
+# FetSelect:按数据的特征做特征选择，前向贪心算法 
 # 输入
 #   data:数据，n*m类型，第n列为类别，factor
+#   func:调用的函数名，为String形式 
 # 输出
 #   result:得到的结果，为特征+准确率+召回率
-FetSelect=function(data){
+FetSelect=function(data,func){
 	col=dim(data)
 	result=logical()
 	numc=col[2]-1
@@ -325,7 +326,7 @@ FetSelect=function(data){
 		mrecall=0
 		for(j in 1:(numc-i)){
 			datause=data[,c(selc,yu[j],col[2])]
-			tmp=TestRWekaCls(datause,datause,"SMO")
+			tmp=TestRWekaCls(datause,datause,func)
 			if(tmp[2]>mrecall){
 				thisSel=yu[j]
 				sigac=tmp[1]
@@ -338,5 +339,53 @@ FetSelect=function(data){
 		yu=allFet[-selc]
 	}
 	result=cbind(selc,acMat,recMat)
+	return(result)
+}
+
+ReductPca=function(data){
+	dimdt=dim(data)
+	col=dimdt[2]
+	dtno=data[,1:col]
+	pcaRe=princomp(dtno,scale=True)
+	loadDt=pcaRe$loading
+	alt=matrix(loadDt,col,col)
+	redt=as.matrix(dtno)%*%alt
+	return(redt)
+}
+
+ReductPca2=function(data){
+	data=scale(data)
+	dimdt=dim(data)
+	col=dimdt[2]
+	dtno=data[,1:col]
+	pcaRe=princomp(dtno,scale=True)
+	loadDt=pcaRe$loading
+	alt=matrix(loadDt,col,col)
+	redt=as.matrix(dtno)%*%alt
+	return(redt)
+}
+
+ReductPcaM=function(data){
+	data=scale(data)
+	dimdt=dim(data)
+	col=dimdt[2]
+	dtno=data[,1:col]
+#   matCor=cor(data)
+	matCor=t(dtno)%*%dtno
+	eigTr=eigen(matCor)
+	eigvalue=eigTr$values
+	loadDt=eigTr$vectors
+	alt=matrix(loadDt,col,col)
+	redt=as.matrix(dtno)%*%alt
+	return(redt)
+}
+
+TePcaCls=function(data){
+	dimdt=dim(data)
+	col=dimdt[2]
+	redt=ReductPcaM(data[,1:(col-2)])
+	redata=cbind(redt,data[,col])
+	rsdt=ResampDat(redata,1)
+	result=TestRWekaCls(data.frame(rsdt),data.frame(rsdt),'J48')
 	return(result)
 }
