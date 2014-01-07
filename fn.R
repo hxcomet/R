@@ -199,6 +199,7 @@ CroAccy=function(dat,numDit,meth){
 		ct[i+1]=ct[i]+tmp[1]
 	}
 	acyM=c(0)
+	recall=c(0)
 	for(i in 1:numDit){
 		tsDat=datAll[(ct[i]+1):ct[i+1],]
 		if(i==1){
@@ -219,6 +220,7 @@ CroAccy=function(dat,numDit,meth){
 		if(meth==2){
 			sresult=TestRWekaCls(trDat,tsDat,"J48")        
 			acyM[i]=sresult[1]
+			recall[i]=sresult[2]
 		}
 		if(meth==3){
 			sresult=TestRWekaCls(trDat,tsDat,"IBk")        
@@ -226,8 +228,10 @@ CroAccy=function(dat,numDit,meth){
 		}
 	}
 	accy=mean(acyM)
-	std=sd(acyM)
-	eff=c(accy,std)
+#	std=sd(acyM)
+#	eff=c(accy,std)
+	rec=mean(recall)
+	eff=c(accy,rec)
 	return(eff)
 }
 
@@ -342,29 +346,13 @@ FetSelect=function(data,func){
 	return(result)
 }
 
-ReductPca=function(data){
-	dimdt=dim(data)
-	col=dimdt[2]
-	dtno=data[,1:col]
-	pcaRe=princomp(dtno,scale=True)
-	loadDt=pcaRe$loading
-	alt=matrix(loadDt,col,col)
-	redt=as.matrix(dtno)%*%alt
-	return(redt)
-}
-
-ReductPca2=function(data){
-	data=scale(data)
-	dimdt=dim(data)
-	col=dimdt[2]
-	dtno=data[,1:col]
-	pcaRe=princomp(dtno,scale=True)
-	loadDt=pcaRe$loading
-	alt=matrix(loadDt,col,col)
-	redt=as.matrix(dtno)%*%alt
-	return(redt)
-}
-
+# ReductPcaM:PCA降维处理 
+# 输入
+#   data:数据，n*m类型
+# 输出
+#   result:得到的结果，
+#		result[[1]]为降维结果
+#		result[[2]]为对应特征矢量矩阵
 ReductPcaM=function(data){
 	data=scale(data)
 	dimdt=dim(data)
@@ -377,15 +365,110 @@ ReductPcaM=function(data){
 	loadDt=eigTr$vectors
 	alt=matrix(loadDt,col,col)
 	redt=as.matrix(dtno)%*%alt
-	return(redt)
+	result=list()
+	result[[1]]=redt
+	result[[2]]=alt
+	return(result)
 }
 
-TePcaCls=function(data){
+# TePcaClsClose:PCA降维分类封闭测试 
+# 输入
+#   data:数据，n*m类型，第n列为类别，factor
+# 输出
+#   result:得到的结果
+#		result[1]为准确率
+#		result[2]为召回率
+TePcaClsClose=function(data){
 	dimdt=dim(data)
 	col=dimdt[2]
-	redt=ReductPcaM(data[,1:(col-2)])
+	redt0=ReductPcaM(data[,1:(col-2)])
+	redt=redt0[[1]]
 	redata=cbind(redt,data[,col])
 	rsdt=ResampDat(redata,1)
-	result=TestRWekaCls(data.frame(rsdt),data.frame(rsdt),'J48')
+	result=TestRWekaCls(data.frame(rsdt),data.frame(redata),'J48')
+	return(result)
+}
+
+# TePcaClsHalf:PCA降维分类半封闭测试 
+# 输入
+#   data:数据，n*m类型，第n列为类别，factor
+# 输出
+#   result:得到的结果
+#		result[1]为准确率
+#		result[2]为召回率
+TePcaClsHalf=function(data){
+	dimdt=dim(data)
+	col=dimdt[2]
+	redt0=ReductPcaM(data[,1:(col-2)])
+	redt=redt0[[1]]
+	redata=cbind(redt,data[,col])
+	rsdt=ResampDat(redata,1)
+	result=CroAccy(data.frame(rsdt),5,2)
+	return(result)
+}
+
+CroAccyPcaOpen=function(dat,numDit,meth){
+	nmCol=dim(dat)
+	dat[,nmCol[2]]=as.factor(dat[,nmCol[2]])
+	datMat=CroDat(dat,numDit)
+	accyMat=matrix()
+	datAll=logical()
+	ct=c(0)
+	for(i in 1:numDit){
+		datAll=rbind(datAll,datMat[[i]])
+		tmp=dim(datMat[[i]])      
+		ct[i+1]=ct[i]+tmp[1]
+	}
+	acyM=c(0)
+	recall=c(0)
+	for(i in 1:numDit){
+		tsDat=datAll[(ct[i]+1):ct[i+1],]
+		if(i==1){
+			st1=logical()
+		}else{
+			st1=datAll[1:ct[i],]
+		}
+		if(i==numDit){
+			st2=logical()
+		}else{
+			st2=datAll[(ct[i+1]+1):nrow(dat),]      
+		}    
+		trDat=rbind(st1,st2)
+####################################################
+#		trDat=ResampDat(data.frame(trDat),1)
+#		print(trDat)
+####################################################
+		rePca=PcaTrTs(trDat[,1:(nmCol[2]-2)],tsDat[,1:(nmCol[2]-2)])
+#		trDat=cbind(rePca[[1]],trDat[,nmCol[2]])
+#		tsDat=cbind(rePca[[2]],tsDat[,nmCol[2]])
+####################################################
+		if(meth==1){
+			sresult=TestSVM(trDat,tsDat)
+			acyM[i]=sresult[1]      
+		}
+		if(meth==2){
+			sresult=TestRWekaCls(trDat,tsDat,"J48")        
+			acyM[i]=sresult[1]
+			recall[i]=sresult[2]
+		}
+		if(meth==3){
+			sresult=TestRWekaCls(trDat,tsDat,"IBk")        
+			acyM[i]=sresult[1]
+		}
+	}
+	accy=mean(acyM)
+	rec=mean(recall)
+	eff=c(accy,rec)
+	return(eff)
+}
+
+
+PcaTrTs=function(trDat,tsDat){
+	matP=ReductPcaM(trDat)
+	trRe=matP[[1]]
+	tsRe=as.matrix(tsDat)%*%as.matrix(matP[[2]])
+	result=list()
+	result[[1]]=trRe
+	result[[2]]=tsRe
 	return(result)
 }
