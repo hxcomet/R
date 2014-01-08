@@ -463,6 +463,7 @@ CroAccyPcaOpen=function(dat,numDit,meth){
 }
 
 
+
 PcaTrTs=function(trDat,tsDat){
 	matP=ReductPcaM(trDat)
 	trRe=matP[[1]]
