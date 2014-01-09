@@ -88,6 +88,24 @@ DelNaSym=function(sdat,sym){
 	return(newDat)
 }
 
+# DelNaSym：清除数据中的 sym 样本，转换为NA形式，再直接删除的方法
+# 输入
+#   sdat：n*m形式的数据框
+#   sym:符号
+# 输出
+#   newDat：n*m形式的数据框
+DelSame=function(sdat){
+	matVar=apply(sdat,2,var)
+	newDat=sdat[,matVar!=0]
+	dimS=dim(sdat)
+	tmp=c(1:dimS[2])
+	sameLable=tmp[matVar==0]
+	result=list()
+	result[[1]]=newDat
+	result[[2]]=sameLable
+	return(result)
+}
+
 # MeanNa：将数据中的样本的属性NA值， 用同列均值的方法替换
 # 输入
 #   sdat：n*m形式的数据框,都是numric类型
@@ -374,15 +392,20 @@ ReductPcaM=function(data){
 # TePcaClsClose:PCA降维分类封闭测试 
 # 输入
 #   data:数据，n*m类型，第n列为类别，factor
+#	num:选取的主成分个数，0 为全部
 # 输出
 #   result:得到的结果
 #		result[1]为准确率
 #		result[2]为召回率
-TePcaClsClose=function(data){
+TePcaClsClose=function(data,num){
 	dimdt=dim(data)
 	col=dimdt[2]
-	redt0=ReductPcaM(data[,1:(col-2)])
+	redt0=ReductPcaM(data[,1:(col-1)])
 	redt=redt0[[1]]
+	if(num==0){
+		num=col-1
+	}
+	redt=redt[,1:num]
 	redata=cbind(redt,data[,col])
 	rsdt=ResampDat(redata,1)
 	result=TestRWekaCls(data.frame(rsdt),data.frame(redata),'J48')
@@ -399,7 +422,7 @@ TePcaClsClose=function(data){
 TePcaClsHalf=function(data){
 	dimdt=dim(data)
 	col=dimdt[2]
-	redt0=ReductPcaM(data[,1:(col-2)])
+	redt0=ReductPcaM(data[,1:(col-1)])
 	redt=redt0[[1]]
 	redata=cbind(redt,data[,col])
 	rsdt=ResampDat(redata,1)
@@ -407,7 +430,19 @@ TePcaClsHalf=function(data){
 	return(result)
 }
 
-CroAccyPcaOpen=function(dat,numDit,meth){
+# CroAccyPcaOpen:PCA降维分类开放测试，交叉验证 
+# 输入
+#   dat:数据，n*m类型，第n列为类别，factor
+#   numDit:交叉的分成份数
+#   meth:采用的算法
+#         1：libsvm
+#         2：weka的J48
+#         3：weka的IBk
+#	num:选取的主成分个数，0 为全部
+# 输出
+#   eff:eff[1] 分类准确度均值
+#       eff[2] 分类召回率
+CroAccyPcaOpen=function(dat,numDit,meth,num){
 	nmCol=dim(dat)
 	dat[,nmCol[2]]=as.factor(dat[,nmCol[2]])
 	datMat=CroDat(dat,numDit)
@@ -436,11 +471,25 @@ CroAccyPcaOpen=function(dat,numDit,meth){
 		trDat=rbind(st1,st2)
 ####################################################
 #		trDat=ResampDat(data.frame(trDat),1)
-#		print(trDat)
 ####################################################
-		rePca=PcaTrTs(trDat[,1:(nmCol[2]-2)],tsDat[,1:(nmCol[2]-2)])
-#		trDat=cbind(rePca[[1]],trDat[,nmCol[2]])
-#		tsDat=cbind(rePca[[2]],tsDat[,nmCol[2]])
+		rePca=PcaTrTs(trDat[,1:(nmCol[2]-1)],tsDat[,1:(nmCol[2]-1)])
+		tr1=rePca[[1]]
+		ts1=rePca[[2]]
+		####################################################
+		if(num==0){
+			num=nmCol[2]-1
+		}
+		tru=tr1[,1:num]
+		tsu=ts1[,1:num]
+		####################################################
+		trDat=cbind(tru,trDat[,nmCol[2]])
+		tsDat=cbind(tsu,tsDat[,nmCol[2]])
+		trDat=data.frame(trDat)
+		tsDat=data.frame(tsDat)
+####################################################
+		trDat=ResampDat(data.frame(trDat),1)
+####################################################
+		
 ####################################################
 		if(meth==1){
 			sresult=TestSVM(trDat,tsDat)
@@ -463,11 +512,23 @@ CroAccyPcaOpen=function(dat,numDit,meth){
 }
 
 
-
+# PcaTrTs:对trDat进行PCA降维，并用trDat的过程系数对tsDat做PCA降维
+# 输入
+#   trDat:数据，n*m类型
+#   tsDat:数据，n*m类型
+# 输出
+#   result:result[[1]] trDat的降维结果
+#          result[[2]] tsDat的降维结果
 PcaTrTs=function(trDat,tsDat){
+	dimTs=dim(tsDat)
+	meanTr=apply(trDat,2,mean)
+	sdTr=apply(trDat,2,sd)
+	matMean=t(matrix(meanTr,dimTs[2],dimTs[1]))
+	matSd=t(matrix(sdTr,dimTs[2],dimTs[1]))
+	tsScale=(tsDat-matMean)*(matSd^(-1))
 	matP=ReductPcaM(trDat)
 	trRe=matP[[1]]
-	tsRe=as.matrix(tsDat)%*%as.matrix(matP[[2]])
+	tsRe=as.matrix(tsScale)%*%as.matrix(matP[[2]])
 	result=list()
 	result[[1]]=trRe
 	result[[2]]=tsRe
