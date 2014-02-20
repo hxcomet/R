@@ -88,7 +88,7 @@ DelNaSym=function(sdat,sym){
 	return(newDat)
 }
 
-# DelNaSym：清除数据中的 sym 样本，转换为NA形式，再直接删除的方法
+# DelSame：清除数据中属性列相同的样本，转换为NA形式，再直接删除的方法
 # 输入
 #   sdat：n*m形式的数据框
 #   sym:符号
@@ -408,7 +408,8 @@ TePcaClsClose=function(data,num){
 	redt=redt[,1:num]
 	redata=cbind(redt,data[,col])
 	rsdt=ResampDat(redata,1)
-	result=TestRWekaCls(data.frame(rsdt),data.frame(redata),'J48')
+#	result=TestRWekaCls(data.frame(rsdt),data.frame(redata),'J48')
+	result=TestRWekaPrd(data.frame(rsdt),data.frame(redata),'J48')
 	return(result)
 }
 
@@ -532,5 +533,30 @@ PcaTrTs=function(trDat,tsDat){
 	result=list()
 	result[[1]]=trRe
 	result[[2]]=tsRe
+	return(result)
+}
+
+# TestRWekaCls：用RWeka的分类算法预测结果
+# 基于：RWeka
+# 输入
+#   trdat:训练数据集，n*m形式的数据框，其中第m列为分类类别，是factor
+#   tsdat：测试数据集，n*m形式的数据框，其中第m列为分类类别，是factor
+#   func:调用的函数名，为String形式 
+# 输出
+#  result[1]: accy:--类准确率
+#  result[2]: recall:--召回率
+TestRWekaPrd=function(trdat,tsdat,func){
+	library(RWeka)
+	cName=colnames(trdat)
+	trdat[,length(cName)]=as.factor(trdat[,length(cName)])
+	clsName=cName[length(cName)]
+	formu=paste(clsName,"~.")
+	cmdStr=paste("model=",func,"(formu,data=trdat)",sep="")
+	eval(parse(text=cmdStr))
+	prd=predict(model,tsdat,type="class")
+	testLable=as.factor(tsdat[,length(cName)])
+	# 
+	result=cbind(testLable,prd)
+	detach("package:RWeka")
 	return(result)
 }
