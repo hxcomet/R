@@ -536,6 +536,7 @@ PcaTrTs=function(trDat,tsDat){
 	return(result)
 }
 
+
 # TestRWekaCls：用RWeka的分类算法预测结果
 # 基于：RWeka
 # 输入
